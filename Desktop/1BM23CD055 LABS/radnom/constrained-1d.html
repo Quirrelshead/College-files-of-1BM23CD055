@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Descent & Ascent — f(x) = x³ − 12x + 7</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card: #12121a;
+            --card-border: #1e1e2e;
+            --text: #e4e4e7;
+            --muted: #71717a;
+            --accent-cyan: #22d3ee;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.1), transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+        header { text-align: center; margin-bottom: 2rem; }
+        header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        header p { color: var(--muted); font-size: 1rem; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .eq-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-cyan);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .eq-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+        .plot-wrap {
+            height: 340px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            margin-top: 1rem;
+        }
+        .plot-wrap canvas { width: 100%; height: 100%; display: block; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        @media (max-width: 600px) { .controls { grid-template-columns: 1fr; } }
+        .control-panel {
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+        .control-panel.min { border-left: 4px solid var(--accent-emerald); }
+        .control-panel.max { border-left: 4px solid var(--accent-amber); }
+        .control-panel h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .control-panel.min h3 { color: var(--accent-emerald); }
+        .control-panel.max h3 { color: var(--accent-amber); }
+        .stats { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .stats strong { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+        .btn-group { display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap; }
+        .btn {
+            padding: 0.45rem 0.9rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-run { background: linear-gradient(135deg, #3b82f6, #22d3ee); color: white; }
+        .btn-run:hover { transform: translateY(-1px); }
+        .btn-step { background: var(--card-border); color: var(--text); }
+        .btn-reset { background: transparent; color: var(--muted); border: 1px solid var(--muted); }
+        .btn-reset:hover { color: var(--text); }
+        .legend { display: flex; gap: 1.5rem; margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+        .legend span { display: flex; align-items: center; gap: 0.4rem; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .legend-dot.min { background: var(--accent-emerald); }
+        .legend-dot.max { background: var(--accent-amber); }
+        .legend-dot.curve { background: #6e7681; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>\( f(x) = x^3 - 12x + 7 \)</h1>
+            <p>Gradient descent (minimum) & gradient ascent (maximum)</p>
+        </header>
+
+        <div class="card">
+            <div class="eq-box">
+                <div class="eq-label">Critical points</div>
+                \( f'(x) = 3x^2 - 12 = 0 \Rightarrow x = -2 \text{ (max)}, \quad x = +2 \text{ (min)} \)
+            </div>
+            <div class="eq-box">
+                <div class="eq-label">At critical points</div>
+                \( f(-2) = 23 \text{ (local max)}, \quad f(2) = -9 \text{ (local min)} \)
+            </div>
+            <div class="plot-wrap"><canvas id="main-canvas"></canvas></div>
+            <div class="legend">
+                <span><span class="legend-dot min"></span> Min path</span>
+                <span><span class="legend-dot max"></span> Max path</span>
+                <span><span class="legend-dot curve"></span> f(x)</span>
+            </div>
+            <div class="controls">
+                <div class="control-panel min">
+                    <h3>Find Minimum (gradient descent)</h3>
+                    <div class="stats">Iter: <strong id="min-iter">0</strong> &nbsp; x = <strong id="min-pos">-</strong> &nbsp; f(x) = <strong id="min-fval">-</strong></div>
+                    <div class="btn-group">
+                        <button class="btn btn-run" id="run-min">▶ Run</button>
+                        <button class="btn btn-step" id="step-min">Step</button>
+                        <button class="btn btn-reset" id="reset-min">Reset</button>
+                    </div>
+                </div>
+                <div class="control-panel max">
+                    <h3>Find Maximum (gradient ascent)</h3>
+                    <div class="stats">Iter: <strong id="max-iter">0</strong> &nbsp; x = <strong id="max-pos">-</strong> &nbsp; f(x) = <strong id="max-fval">-</strong></div>
+                    <div class="btn-group">
+                        <button class="btn btn-run" id="run-max">▶ Run</button>
+                        <button class="btn btn-step" id="step-max">Step</button>
+                        <button class="btn btn-reset" id="reset-max">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMathInElement(document.body, { delimiters: [{ left: '\\(', right: '\\)', display: false }], throwOnError: false });
+    });
+
+    const f = x => x*x*x - 12*x + 7;
+    const fPrime = x => 3*x*x - 12;
+    const X_MIN = -5, X_MAX = 5;
+
+    function setupCanvas(canvas) {
+        const parent = canvas.parentElement;
+        const w = parent.clientWidth || 500;
+        const h = parent.clientHeight || 340;
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        return { width: w, height: h, ctx };
+    }
+
+    let minState = { x: 4, path: [4], iter: 0, lr: 0.03, running: false, id: null };
+    let maxState = { x: 0, path: [0], iter: 0, lr: 0.03, running: false, id: null };
+    const canvas = document.getElementById('main-canvas');
+
+    function draw() {
+        const { width, height, ctx } = setupCanvas(canvas);
+        const pad = { t: 25, r: 25, b: 35, l: 50 };
+        const W = width - pad.l - pad.r, H = height - pad.t - pad.b;
+        const yMin = -70, yMax = 80;
+        const toX = x => pad.l + ((x - X_MIN) / (X_MAX - X_MIN)) * W;
+        const toY = y => pad.t + H - ((y - yMin) / (yMax - yMin)) * H;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, pad.t);
+        ctx.lineTo(pad.l, pad.t + H);
+        ctx.lineTo(pad.l + W, pad.t + H);
+        ctx.stroke();
+
+        const step = (X_MAX - X_MIN) / 400;
+        ctx.beginPath();
+        let started = false;
+        for (let x = X_MIN; x <= X_MAX; x += step) {
+            const y = f(x);
+            if (y >= yMin - 10 && y <= yMax + 10) {
+                if (!started) { ctx.moveTo(toX(x), toY(y)); started = true; }
+                else ctx.lineTo(toX(x), toY(y));
+            }
+        }
+        ctx.strokeStyle = '#6e7681';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(toX(-2), toY(f(-2)), 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#e4e4e7';
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('max (-2, 23)', toX(-2) + 8, toY(f(-2)));
+
+        ctx.beginPath();
+        ctx.arc(toX(2), toY(f(2)), 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+        ctx.fill();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#e4e4e7';
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('min (2, -9)', toX(2) + 8, toY(f(2)));
+
+        if (minState.path.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(toX(minState.path[0]), toY(f(minState.path[0])));
+            for (let i = 1; i < minState.path.length; i++)
+                ctx.lineTo(toX(minState.path[i]), toY(f(minState.path[i])));
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        const lastMin = minState.path[minState.path.length - 1];
+        ctx.beginPath();
+        ctx.arc(toX(lastMin), toY(f(lastMin)), 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 14;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        if (maxState.path.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(toX(maxState.path[0]), toY(f(maxState.path[0])));
+            for (let i = 1; i < maxState.path.length; i++)
+                ctx.lineTo(toX(maxState.path[i]), toY(f(maxState.path[i])));
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        const lastMax = maxState.path[maxState.path.length - 1];
+        ctx.beginPath();
+        ctx.arc(toX(lastMax), toY(f(lastMax)), 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 14;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function stepMin() {
+        if (minState.iter >= 60) return false;
+        let x = minState.x - minState.lr * fPrime(minState.x);
+        x = Math.max(X_MIN, Math.min(X_MAX, x));
+        minState.x = x;
+        minState.path.push(x);
+        minState.iter++;
+        document.getElementById('min-iter').textContent = minState.iter;
+        document.getElementById('min-pos').textContent = x.toFixed(3);
+        document.getElementById('min-fval').textContent = f(x).toFixed(2);
+        draw();
+        return true;
+    }
+
+    function stepMax() {
+        if (maxState.iter >= 60) return false;
+        let x = maxState.x + maxState.lr * fPrime(maxState.x);
+        x = Math.max(X_MIN, Math.min(X_MAX, x));
+        maxState.x = x;
+        maxState.path.push(x);
+        maxState.iter++;
+        document.getElementById('max-iter').textContent = maxState.iter;
+        document.getElementById('max-pos').textContent = x.toFixed(3);
+        document.getElementById('max-fval').textContent = f(x).toFixed(2);
+        draw();
+        return true;
+    }
+
+    function resetMin() {
+        minState.running = false;
+        if (minState.id) cancelAnimationFrame(minState.id);
+        document.getElementById('run-min').disabled = false;
+        minState = { x: 4, path: [4], iter: 0, lr: 0.03, running: false, id: null };
+        document.getElementById('min-iter').textContent = '0';
+        document.getElementById('min-pos').textContent = '4.000';
+        document.getElementById('min-fval').textContent = f(4).toFixed(2);
+        draw();
+    }
+
+    function resetMax() {
+        maxState.running = false;
+        if (maxState.id) cancelAnimationFrame(maxState.id);
+        document.getElementById('run-max').disabled = false;
+        maxState = { x: 0, path: [0], iter: 0, lr: 0.03, running: false, id: null };
+        document.getElementById('max-iter').textContent = '0';
+        document.getElementById('max-pos').textContent = '0.000';
+        document.getElementById('max-fval').textContent = f(0).toFixed(2);
+        draw();
+    }
+
+    document.getElementById('run-min').onclick = () => {
+        if (minState.running) return;
+        minState.running = true;
+        document.getElementById('run-min').disabled = true;
+        const go = () => {
+            if (!stepMin() || !minState.running) {
+                minState.running = false;
+                document.getElementById('run-min').disabled = false;
+                return;
+            }
+            minState.id = requestAnimationFrame(() => setTimeout(go, 50));
+        };
+        go();
+    };
+    document.getElementById('step-min').onclick = () => stepMin();
+    document.getElementById('reset-min').onclick = resetMin;
+
+    document.getElementById('run-max').onclick = () => {
+        if (maxState.running) return;
+        maxState.running = true;
+        document.getElementById('run-max').disabled = true;
+        const go = () => {
+            if (!stepMax() || !maxState.running) {
+                maxState.running = false;
+                document.getElementById('run-max').disabled = false;
+                return;
+            }
+            maxState.id = requestAnimationFrame(() => setTimeout(go, 50));
+        };
+        go();
+    };
+    document.getElementById('step-max').onclick = () => stepMax();
+    document.getElementById('reset-max').onclick = resetMax;
+
+    setTimeout(() => { resetMin(); resetMax(); }, 100);
+    window.addEventListener('resize', draw);
+    </script>
+</body>
+</html>

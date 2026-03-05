@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimization Simulation | Continuous & Discrete</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --bg-elevated: #21262d;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-cyan: #58a6ff;
+            --accent-green: #3fb950;
+            --gradient-2: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(88, 166, 255, 0.15), transparent);
+        }
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+        .icon-logo { width: 42px; height: 42px; color: var(--accent-cyan); }
+        .header h1 { font-size: 2rem; font-weight: 700; background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .subtitle { color: var(--text-secondary); font-size: 1rem; font-weight: 300; }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: var(--bg-card); padding: 0.5rem; border-radius: var(--radius); border: 1px solid var(--border); }
+        .tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 1.5rem; background: transparent; border: none; border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .tab:hover { color: var(--text-primary); background: var(--bg-elevated); }
+        .tab.active { background: var(--gradient-2); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+        .tab-icon { width: 20px; height: 20px; }
+        .panel { display: none; animation: fadeIn 0.4s ease; }
+        .panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 1024px) { .panel.active { grid-template-columns: 1fr; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .equation-card, .controls-card, .plot-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
+        .equation-card, .plot-card { grid-column: 1 / -1; }
+        .equation-card h3, .controls-card h3, .plot-card h3 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary); }
+        .card-icon { width: 22px; height: 22px; color: var(--accent-cyan); }
+        .eq-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem; margin-bottom: 0.25rem; }
+        .equation { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; padding: 0.75rem 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); border-left: 3px solid #a371f7; overflow-x: auto; }
+        .control-group { margin-bottom: 1rem; }
+        .control-group label { display: flex; flex-direction: column; gap: 0.35rem; }
+        .control-group span { font-size: 0.9rem; color: var(--text-secondary); }
+        .control-group input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: var(--bg-elevated); border-radius: 3px; outline: none; }
+        .control-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--gradient-2); border-radius: 50%; cursor: pointer; }
+        .control-group input[type="text"], .control-group input[type="number"] { padding: 0.6rem 1rem; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; }
+        .control-group input:focus { outline: none; border-color: var(--accent-cyan); }
+        .value-display { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--accent-cyan) !important; }
+        .button-group { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-primary { background: var(--gradient-2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-outline:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .iteration-info { display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 0.75rem 1rem; background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.9rem; }
+        .iteration-info span { color: var(--text-secondary); }
+        .iteration-info strong { color: var(--accent-green); font-family: 'JetBrains Mono', monospace; }
+        canvas { width: 100%; border-radius: var(--radius-sm); background: var(--bg-dark); border: 1px solid var(--border); display: block; }
+        .plot-container { position: relative; width: 100%; height: 350px; background: var(--bg-dark); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .plot-card canvas { width: 100%; height: 100%; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <svg class="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/>
+                </svg>
+                <h1>Optimization Simulator</h1>
+            </div>
+            <p class="subtitle">Interactive visualization of continuous & discrete optimization</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="continuous">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/></svg>
+                Continuous
+            </button>
+            <button class="tab" data-tab="discrete">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                Discrete
+            </button>
+        </nav>
+
+        <section id="continuous-panel" class="panel active">
+            <div class="equation-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Linear Regression</h3>
+                <p class="eq-label">Model (line):</p>
+                <div class="equation">\( \hat{y} = m \cdot x + b \)</div>
+                <p class="eq-label">Loss (Mean Squared Error):</p>
+                <div class="equation">\( \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \)</div>
+                <p class="eq-label">Gradient Descent Update:</p>
+                <div class="equation">\( m \leftarrow m - \alpha \cdot \frac{\partial \text{MSE}}{\partial m}, \quad b \leftarrow b - \alpha \cdot \frac{\partial \text{MSE}}{\partial b} \)</div>
+            </div>
+            <div class="controls-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Parameters</h3>
+                <div class="control-group"><label><span>Learning rate (α)</span><input type="range" id="lr-slider" min="0.001" max="0.2" step="0.001" value="0.05"><span class="value-display" id="lr-value">0.05</span></label></div>
+                <div class="control-group"><label><span>Initial (m, b)</span><input type="text" id="start-point" value="0, 0" placeholder="0, 0"></label></div>
+                <div class="control-group"><label><span>Max iterations</span><input type="number" id="max-iter" min="10" max="500" value="100"></label></div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="run-continuous"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run Simulation</button>
+                    <button class="btn btn-secondary" id="step-continuous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3"/></svg>Step</button>
+                    <button class="btn btn-outline" id="reset-continuous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+                </div>
+            </div>
+            <div class="plot-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Data Points & Fitted Line</h3>
+                <div class="iteration-info"><span>Iteration: <strong id="cont-iter">0</strong></span><span>Line: y = <strong id="cont-pos">0</strong>x + <strong id="cont-fval">0</strong></span><span>MSE = <strong id="cont-mse">-</strong></span></div>
+                <div class="plot-container"><canvas id="contour-canvas"></canvas></div>
+            </div>
+            <div class="plot-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>MSE vs Iteration</h3>
+                <div class="plot-container"><canvas id="loss-canvas"></canvas></div>
+            </div>
+        </section>
+
+        <section id="discrete-panel" class="panel">
+            <div class="equation-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Greedy Coin Change</h3>
+                <p class="eq-label">Goal: Make change using fewest coins</p>
+                <div class="equation">\( \text{Coins: } [25, 10, 5, 1] \quad \text{— use largest coin that fits, repeat} \)</div>
+                <p class="eq-label">Example: 67¢ → 25¢+25¢+10¢+5¢+1¢+1¢ = 6 coins</p>
+            </div>
+            <div class="controls-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Parameters</h3>
+                <div class="control-group"><label><span>Amount to make (cents)</span><input type="number" id="coin-amount" min="1" max="99" value="67"></label></div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="run-discrete"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run Simulation</button>
+                    <button class="btn btn-secondary" id="step-discrete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3"/></svg>Step</button>
+                    <button class="btn btn-outline" id="reset-discrete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+                </div>
+            </div>
+            <div class="plot-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Coins Used (25¢, 10¢, 5¢, 1¢)</h3>
+                <div class="iteration-info"><span>Step: <strong id="disc-iter">0</strong></span><span>Remaining: <strong id="disc-pos">67</strong>¢</span><span>Coins so far: <strong id="disc-fval">0</strong></span><span>Total: <strong id="disc-temp">67</strong>¢</span></div>
+                <div class="plot-container"><canvas id="discrete-canvas"></canvas></div>
+            </div>
+            <div class="plot-card">
+                <h3><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Remaining Amount vs Step</h3>
+                <div class="plot-container"><canvas id="discrete-loss-canvas"></canvas></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMathInElement(document.body, { delimiters: [{ left: '\\(', right: '\\)', display: false }], throwOnError: false });
+    });
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+            setTimeout(() => { drawContourPlot(); drawLossPlot(); drawDiscretePlot(); drawDiscreteLossPlot(); }, 50);
+        });
+    });
+
+    // ===== Linear Regression =====
+    function genData(n, noise = 0.3) {
+        const data = [];
+        const m = 2, b = 1;
+        for (let i = 0; i < n; i++) {
+            const x = (i / (n - 1)) * 4 - 1;
+            const y = m * x + b + (Math.random() - 0.5) * noise * 2;
+            data.push({ x, y });
+        }
+        return data;
+    }
+    let dataPoints = genData(25, 0.4);
+    let continuousState = { m: 0, b: 0, lossHistory: [], currentIter: 0, lr: 0.05, maxIter: 100, running: false, animationId: null };
+    const contourCanvas = document.getElementById('contour-canvas');
+    const lossCanvas = document.getElementById('loss-canvas');
+
+    function setupCanvas(canvas) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const parent = canvas.parentElement;
+        let w = parent ? parent.clientWidth : 600;
+        let h = parent ? parent.clientHeight : 350;
+        if (w <= 0 || h <= 0) {
+            w = parent ? parent.offsetWidth : 600;
+            h = parent ? parent.offsetHeight : 350;
+        }
+        const width = Math.max(w || 600, 100);
+        const height = Math.max(h || 350, 100);
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+        return { width, height, ctx };
+    }
+
+    function drawContourPlot() {
+        const { width, height, ctx } = setupCanvas(contourCanvas);
+        const padding = { top: 30, right: 30, bottom: 40, left: 50 };
+        const plotW = width - padding.left - padding.right;
+        const plotH = height - padding.top - padding.bottom;
+        const xMin = -1.2, xMax = 3.2;
+        const allY = dataPoints.map(p => p.y);
+        const yMin = Math.min(...allY) - 0.5, yMax = Math.max(...allY) + 0.5;
+        const toX = (x) => padding.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        const toY = (y) => padding.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+        ctx.fillStyle = '#161b22';
+        ctx.fillRect(padding.left, padding.top, plotW, plotH);
+        ctx.strokeStyle = '#8b949e';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + plotH);
+        ctx.lineTo(padding.left + plotW, padding.top + plotH);
+        ctx.stroke();
+        dataPoints.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(toX(p.x), toY(p.y), 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#58a6ff';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+        const m = continuousState.m, b = continuousState.b;
+        if (isFinite(m) && isFinite(b)) {
+            const y1 = m * xMin + b, y2 = m * xMax + b;
+            ctx.beginPath();
+            ctx.moveTo(toX(xMin), toY(y1));
+            ctx.lineTo(toX(xMax), toY(y2));
+            ctx.strokeStyle = '#3fb950';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+    }
+
+    function drawLossPlot() {
+        const { width, height, ctx } = setupCanvas(lossCanvas);
+        const padding = { top: 25, right: 25, bottom: 40, left: 55 };
+        const plotW = Math.max(width - padding.left - padding.right, 10);
+        const plotH = Math.max(height - padding.top - padding.bottom, 10);
+        const losses = continuousState.lossHistory;
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + plotH);
+        ctx.lineTo(padding.left + plotW, padding.top + plotH);
+        ctx.stroke();
+        const valid = losses.filter(v => isFinite(v));
+        if (valid.length < 2) return;
+        const maxLoss = Math.max(...valid), minLoss = Math.min(...valid), range = maxLoss - minLoss || 1;
+        const toX = (i) => padding.left + (i / Math.max(losses.length - 1, 1)) * plotW;
+        const toY = (v) => padding.top + plotH - ((v - minLoss) / range) * plotH;
+        ctx.beginPath();
+        let started = false;
+        for (let i = 0; i < losses.length; i++) {
+            if (isFinite(losses[i])) {
+                if (!started) { ctx.moveTo(toX(i), toY(losses[i])); started = true; }
+                else ctx.lineTo(toX(i), toY(losses[i]));
+            }
+        }
+        ctx.strokeStyle = '#a371f7';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    }
+
+    function stepGradientDescent() {
+        if (continuousState.currentIter >= continuousState.maxIter) return false;
+        const n = dataPoints.length;
+        let dm = 0, db = 0;
+        dataPoints.forEach(p => {
+            const pred = continuousState.m * p.x + continuousState.b;
+            const err = p.y - pred;
+            dm += -2 * err * p.x / n;
+            db += -2 * err / n;
+        });
+        continuousState.m -= continuousState.lr * dm;
+        continuousState.b -= continuousState.lr * db;
+        let mse = 0;
+        dataPoints.forEach(p => {
+            const pred = continuousState.m * p.x + continuousState.b;
+            mse += (p.y - pred) ** 2 / n;
+        });
+        continuousState.lossHistory.push(mse);
+        continuousState.currentIter++;
+        document.getElementById('cont-iter').textContent = continuousState.currentIter;
+        document.getElementById('cont-pos').textContent = continuousState.m.toFixed(3);
+        document.getElementById('cont-fval').textContent = continuousState.b.toFixed(3);
+        document.getElementById('cont-mse').textContent = mse.toFixed(4);
+        drawContourPlot();
+        drawLossPlot();
+        return true;
+    }
+
+    function runContinuousSimulation() {
+        if (continuousState.running) return;
+        continuousState.running = true;
+        document.getElementById('run-continuous').disabled = true;
+        const animate = () => {
+            if (!stepGradientDescent() || !continuousState.running) {
+                continuousState.running = false;
+                document.getElementById('run-continuous').disabled = false;
+                return;
+            }
+            continuousState.animationId = requestAnimationFrame(() => setTimeout(animate, 80));
+        };
+        animate();
+    }
+
+    function parseStartPoint() {
+        const raw = document.getElementById('start-point').value || '0, 0';
+        const parts = raw.split(',').map(s => parseFloat(String(s).trim()));
+        return { m: isFinite(parts[0]) ? parts[0] : 0, b: isFinite(parts[1]) ? parts[1] : 0 };
+    }
+
+    function resetContinuous() {
+        continuousState.running = false;
+        if (continuousState.animationId) cancelAnimationFrame(continuousState.animationId);
+        document.getElementById('run-continuous').disabled = false;
+        dataPoints = genData(25, 0.4);
+        const { m, b } = parseStartPoint();
+        const lr = parseFloat(document.getElementById('lr-slider').value) || 0.05;
+        const maxIter = parseInt(document.getElementById('max-iter').value, 10) || 100;
+        let mse = 0;
+        dataPoints.forEach(p => { mse += (p.y - (m * p.x + b)) ** 2 / dataPoints.length; });
+        continuousState = { m, b, lossHistory: [mse], currentIter: 0, lr: isFinite(lr) ? lr : 0.05, maxIter: maxIter > 0 ? maxIter : 100, running: false, animationId: null };
+        document.getElementById('cont-iter').textContent = '0';
+        document.getElementById('cont-pos').textContent = m.toFixed(3);
+        document.getElementById('cont-fval').textContent = b.toFixed(3);
+        document.getElementById('cont-mse').textContent = mse.toFixed(4);
+        drawContourPlot();
+        drawLossPlot();
+    }
+
+    document.getElementById('lr-slider').addEventListener('input', e => { document.getElementById('lr-value').textContent = e.target.value; continuousState.lr = parseFloat(e.target.value); });
+    document.getElementById('run-continuous').addEventListener('click', runContinuousSimulation);
+    document.getElementById('step-continuous').addEventListener('click', () => stepGradientDescent());
+    document.getElementById('reset-continuous').addEventListener('click', resetContinuous);
+
+    // ===== Greedy Coin Change =====
+    const COINS = [25, 10, 5, 1];
+    let discreteState = { remaining: 67, coinsUsed: [], step: 0, remainingHistory: [67], running: false, animationId: null };
+    const discreteCanvas = document.getElementById('discrete-canvas');
+    const discreteLossCanvas = document.getElementById('discrete-loss-canvas');
+
+    function drawDiscretePlot() {
+        const { width, height, ctx } = setupCanvas(discreteCanvas);
+        const padding = { top: 40, right: 30, bottom: 50, left: 50 };
+        const plotW = width - padding.left - padding.right;
+        const plotH = height - padding.top - padding.bottom;
+        const counts = [0, 0, 0, 0];
+        discreteState.coinsUsed.forEach(c => counts[COINS.indexOf(c)]++);
+        const labels = ['25¢', '10¢', '5¢', '1¢'];
+        const maxCount = Math.max(...counts, 1);
+        const barH = 40;
+        const gap = 20;
+        COINS.forEach((coin, i) => {
+            const y = padding.top + i * (barH + gap);
+            const barW = (counts[i] / maxCount) * plotW * 0.7;
+            ctx.fillStyle = counts[i] > 0 ? '#3fb950' : '#484f58';
+            ctx.fillRect(padding.left, y, barW, barH);
+            ctx.strokeStyle = '#6e7681';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(padding.left, y, barW, barH);
+            ctx.fillStyle = '#e6edf3';
+            ctx.font = '14px Outfit';
+            ctx.fillText(`${labels[i]}: ${counts[i]} coin${counts[i] !== 1 ? 's' : ''}`, padding.left + barW + 15, y + barH/2 + 5);
+        });
+    }
+
+    function drawDiscreteLossPlot() {
+        const { width, height, ctx } = setupCanvas(discreteLossCanvas);
+        const padding = { top: 25, right: 25, bottom: 40, left: 55 };
+        const plotW = Math.max(width - padding.left - padding.right, 10);
+        const plotH = Math.max(height - padding.top - padding.bottom, 10);
+        const values = discreteState.remainingHistory;
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + plotH);
+        ctx.lineTo(padding.left + plotW, padding.top + plotH);
+        ctx.stroke();
+        if (values.length < 2) return;
+        const maxV = Math.max(...values), minV = Math.min(...values), range = maxV - minV || 1;
+        const toX = (i) => padding.left + (i / Math.max(values.length - 1, 1)) * plotW;
+        const toY = (v) => padding.top + plotH - ((v - minV) / range) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(values[0]));
+        for (let i = 1; i < values.length; i++) ctx.lineTo(toX(i), toY(values[i]));
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    }
+
+    function stepCoinChange() {
+        if (discreteState.remaining <= 0) return false;
+        const coin = COINS.find(c => c <= discreteState.remaining);
+        if (!coin) return false;
+        discreteState.coinsUsed.push(coin);
+        discreteState.remaining -= coin;
+        discreteState.remainingHistory.push(discreteState.remaining);
+        discreteState.step++;
+        const total = parseInt(document.getElementById('coin-amount').value, 10) || 67;
+        document.getElementById('disc-iter').textContent = discreteState.step;
+        document.getElementById('disc-pos').textContent = discreteState.remaining;
+        document.getElementById('disc-fval').textContent = discreteState.coinsUsed.length;
+        document.getElementById('disc-temp').textContent = total;
+        drawDiscretePlot();
+        drawDiscreteLossPlot();
+        return true;
+    }
+
+    function runDiscreteSimulation() {
+        if (discreteState.running) return;
+        discreteState.running = true;
+        document.getElementById('run-discrete').disabled = true;
+        const animate = () => {
+            if (!stepCoinChange() || !discreteState.running) {
+                discreteState.running = false;
+                document.getElementById('run-discrete').disabled = false;
+                return;
+            }
+            discreteState.animationId = requestAnimationFrame(() => setTimeout(animate, 500));
+        };
+        animate();
+    }
+
+    function resetDiscrete() {
+        discreteState.running = false;
+        if (discreteState.animationId) cancelAnimationFrame(discreteState.animationId);
+        document.getElementById('run-discrete').disabled = false;
+        const total = parseInt(document.getElementById('coin-amount').value, 10) || 67;
+        discreteState = { remaining: total, coinsUsed: [], step: 0, remainingHistory: [total], running: false, animationId: null };
+        document.getElementById('disc-iter').textContent = '0';
+        document.getElementById('disc-pos').textContent = total;
+        document.getElementById('disc-fval').textContent = '0';
+        document.getElementById('disc-temp').textContent = total;
+        drawDiscretePlot();
+        drawDiscreteLossPlot();
+    }
+
+    document.getElementById('run-discrete').addEventListener('click', runDiscreteSimulation);
+    document.getElementById('step-discrete').addEventListener('click', () => stepCoinChange());
+    document.getElementById('reset-discrete').addEventListener('click', resetDiscrete);
+
+    function init() {
+        resetContinuous();
+        resetDiscrete();
+    }
+    if (document.readyState === 'complete') setTimeout(init, 50);
+    else window.addEventListener('load', () => setTimeout(init, 50));
+    window.addEventListener('resize', () => { drawContourPlot(); drawLossPlot(); drawDiscretePlot(); drawDiscreteLossPlot(); });
+    </script>
+</body>
+</html>
