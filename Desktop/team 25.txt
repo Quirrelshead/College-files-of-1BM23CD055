@@ -1,0 +1,75 @@
+import java.util.Scanner;
+class Invalidrentalduration extends Exception{
+   String m;
+   Invalidrentalduration(String m){
+      super(m);
+   }
+}
+class Notavailable extends Exception{
+   String m;
+   Notavailable(String m){
+      super(m);
+   }
+}
+class Vehicle{
+   double rent_dur;
+   Vehicle(double rent_dur){
+       this.rent_dur=rent_dur;
+   }     
+}
+class Car extends Vehicle{
+   String model;
+   Car(double rent_dur,String model){
+      super(rent_dur);
+      this.model=model;
+   }
+}
+class Electric_car extends Car{
+   int no_of_cars;
+   double price=10000;
+   Electric_car(double rent_dur,String model,int no_of_cars)throws Invalidrentalduration{
+      if(rent_dur>4){
+         throw new Invalidrentalduration("u can rent a car only for 3 days");
+      }
+      super(rent_dur,model);      
+      this.no_of_cars=no_of_cars;
+   }
+   void check_Available()throws Notavailable{
+      if(no_of_cars>=10){
+      throw new Notavailable("at once u can rent only 10 cars");
+      }
+   }
+}
+public class Main{
+public static void main(String[] args){
+   Scanner sc=new Scanner(System.in);
+   try{
+   System.out.println("Enter rent duration: ");
+   double a=sc.nextDouble();
+   System.out.println("Enter model: ");
+   String b=sc.next();
+   System.out.println("Enter no cars : ");
+   int c=sc.nextInt();
+   Electric_car e=new  Electric_car(a,b,c);
+   e.check_Available();
+}
+   catch (Invalidrentalduration f){
+   System.out.println(f.getMessage());
+   }
+   catch (Notavailable h){
+    System.out.println(h.getMessage());
+   }
+}
+}
+
+      
+ OUTPUT:
+ ----jGRASP exec: javac -g Main.java
+Main.java:34: error: flexible constructors is a preview feature and is disabled by default.
+      super(rent_dur,model);      
+           ^
+  (use --enable-preview to enable flexible constructors)
+1 error
+
+ ----jGRASP wedge2: Exit code for process is 1.
+ ----jGRASP: Operation complete.

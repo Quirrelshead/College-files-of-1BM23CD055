@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Compare Cars - DriveX</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family: 'Montserrat', sans-serif;
+    background:#0a0a0a;
+    color:white;
+    margin:0;
+    padding:40px;
+}
+h1{text-align:center;margin-bottom:10px;}
+p{text-align:center;color:#aaa;margin-bottom:30px;}
+
+.cars-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:25px;
+}
+
+.car-card{
+    background:rgba(26,26,46,0.6);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.car-image img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+}
+
+.car-info{
+    padding:20px;
+}
+
+.car-name{font-size:18px;font-weight:600;}
+.car-brand{color:#c9a227;font-size:13px;}
+.car-price{margin:10px 0;color:#c9a227;font-weight:700;}
+
+.compare-btn{
+    margin-top:10px;
+    display:block;
+    cursor:pointer;
+}
+
+button{
+    background:#c9a227;
+    border:none;
+    padding:14px 25px;
+    font-weight:700;
+    cursor:pointer;
+    border-radius:6px;
+    margin:30px auto;
+    display:block;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:40px;
+}
+
+th,td{
+    border:1px solid rgba(255,255,255,0.2);
+    padding:12px;
+    text-align:center;
+}
+
+th{
+    background:rgba(201,162,39,0.2);
+}
+
+img.compare-img{
+    width:120px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Compare Cars</h1>
+<p>Select at least 2 cars to compare</p>
+
+<div class="cars-grid" id="carsGrid"></div>
+
+<button onclick="compareCars()">Compare Selected</button>
+
+<div id="comparisonResult"></div>
+
+<script>
+const carsData = [
+{ id:1,name:"SF90 Stradale",brand:"Ferrari",price:52000000,fuel:"Hybrid",mileage:8,co2:120,type:"Coupe",color:"Red",seats:2,image:"https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800"},
+{ id:2,name:"Roma",brand:"Ferrari",price:22400000,fuel:"Petrol",mileage:12,co2:245,type:"Coupe",color:"Black",seats:2,image:"https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=800"},
+{ id:7,name:"RS e-tron GT",brand:"Audi",price:11900000,fuel:"Electric",mileage:0,co2:0,type:"Sedan",color:"Gray",seats:5,image:"https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800"},
+{ id:13,name:"Swift",brand:"Maruti Suzuki",price:700000,fuel:"Petrol",mileage:23,co2:120,type:"Sedan",color:"White",seats:5,image:"https://imgcdn.zigwheels.pk/large/gallery/color/13/111/suzuki-swift-color-239878.jpg"},
+{ id:19,name:"Camry Hybrid",brand:"Toyota",price:2410000,fuel:"Hybrid",mileage:25,co2:120,type:"Sedan",color:"White",seats:5,image:"https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800"},
+{ id:31,name:"Atto 3",brand:"BYD",price:3400000,fuel:"Electric",mileage:0,co2:0,type:"SUV",color:"White",seats:5,image:"https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=800"}
+];
+
+function formatPrice(p){
+    if(p>=10000000) return "₹"+(p/10000000).toFixed(1)+" Cr";
+    if(p>=100000) return "₹"+(p/100000).toFixed(1)+" L";
+    return "₹"+p;
+}
+
+function loadCars(){
+    const grid=document.getElementById("carsGrid");
+    grid.innerHTML=carsData.map(car=>`
+        <div class="car-card">
+            <div class="car-image">
+                <img src="${car.image}">
+            </div>
+            <div class="car-info">
+                <div class="car-name">${car.name}</div>
+                <div class="car-brand">${car.brand}</div>
+                <div class="car-price">${formatPrice(car.price)}</div>
+                <label class="compare-btn">
+                    <input type="checkbox" value="${car.id}"> Add to Compare
+                </label>
+            </div>
+        </div>
+    `).join("");
+}
+
+function compareCars(){
+    const ids=[...document.querySelectorAll("input[type=checkbox]:checked")].map(c=>+c.value);
+    if(ids.length<2){alert("Select at least 2 cars");return;}
+
+    const selected=carsData.filter(c=>ids.includes(c.id));
+    let html="<table><tr><th>Feature</th>";
+    selected.forEach(c=>html+=`<th>${c.name}</th>`);
+    html+="</tr>";
+
+    const rows=[
+        ["Image","image",true],
+        ["Brand","brand"],
+        ["Price","price"],
+        ["Fuel","fuel"],
+        ["Mileage","mileage"],
+        ["CO₂","co2"],
+        ["Type","type"],
+        ["Seats","seats"],
+        ["Color","color"]
+    ];
+
+    rows.forEach(r=>{
+        html+=`<tr><td>${r[0]}</td>`;
+        selected.forEach(c=>{
+            let v=c[r[1]];
+            if(r[1]=="price")v=formatPrice(v);
+            if(r[2])v=`<img class="compare-img" src="${v}">`;
+            html+=`<td>${v}</td>`;
+        });
+        html+="</tr>";
+    });
+
+    html+="</table>";
+    document.getElementById("comparisonResult").innerHTML=html;
+}
+
+loadCars();
+</script>
+
+</body>
+</html>
+

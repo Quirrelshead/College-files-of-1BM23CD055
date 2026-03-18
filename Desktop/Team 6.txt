@@ -1,0 +1,80 @@
+class bookException extends Exception
+{
+bookException(String message)
+{
+super(message);
+}
+}
+class library 
+{
+int bookcount=10;
+public synchronized void issue(String name,int count)throws bookException
+{
+if(count<=bookcount)
+{
+bookcount=bookcount-count;
+System.out.println(name+" takes "+count+" books");
+}
+else
+{
+throw new bookException("no. of books to issue has exceeded the limit for "+name);
+}
+}
+public synchronized void returnBook(String name,int count)
+{
+bookcount+=count;
+System.out.println(name+" has returned "+count+" books");
+}
+}
+
+
+class user extends Thread
+{
+library l;
+String name;
+int count;
+String choice;
+user(library l, String name,String choice, int count){
+   this.l=l;
+   this.name=name;
+   this.count=count;
+   this.choice= choice;
+}
+
+public void run(){
+ if(choice =="returnBook"){
+      l.returnBook(name,count);
+   }
+
+try{
+   if(choice=="issue"){  
+   l.issue(name,count);
+   }
+   }
+catch(bookException e){
+   System.out.println(e.getMessage());
+}
+
+  }
+}
+
+
+public class main{
+   public static void main(String[] args){
+      library l= new library();
+      user u1=new user(l,"Ayush","issue",3);
+      user u2=new user(l,"Bhoomi","issue",7);
+      user u3=new user(l,"Chethan","issue",2);
+      user u4=new user(l,"Bhoomi","returnBook",5);
+
+      
+     
+      u1.start();
+      u2.start();
+      u3.start();
+  
+}
+}
+
+
+
